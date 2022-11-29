@@ -1,65 +1,61 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(
+    home: FirstApp(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'First App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'QR Code'),
+class Data {
+  final String title;
+
+  const Data({
+    required this.title,
+  });
+
+  factory Data.fromJson(Map<String, dynamic> json) {
+    return Data(
+      title: json['title'],
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final baseURL = 'https://jsonplaceholder.typicode.com/posts';
-  var _setData = [];
-
-  void fetchData() async {
-    try {
-      final response = await get(Uri.parse(baseURL));
-      final post = jsonDecode(response.body) as List;
-
-      setState(() {
-        _setData = post;
-      });
-    } catch (e) {
-      print(e);
-    }
+class FirstApp extends StatelessWidget {
+  final String api = "https://fakestoreapi.com/users";
+  Future<List<dynamic>> fecthDataUsers() async {
+    var result = await http.get(Uri.parse(api));
+    return json.decode(result.body);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text('FirstApp'),
       ),
-      body: ListView.builder(
-        itemCount: _setData.length,
-        itemBuilder: (context, i){
-          final datas = _setData[i];
-          return Text('Title : ${datas['title']}');
-        },
+      body: Container(
+        child: FutureBuilder<List<dynamic>>(
+          future: fecthDataUsers(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.hasData) {
+              return ListView.builder(
+                  padding: EdgeInsets.all(10),
+                  itemCount: snapshot.data.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Card(
+                        child: Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Text(snapshot.data[index]['email']),
+                    ));
+                  });
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          },
+        ),
       ),
     );
   }
